@@ -1,3 +1,6 @@
+# Note
+This fork currently under review and only one function was testes "await netbox.dcim.dcim_sites_list()" and some hardcoded flag were set for it to work, library contain parsing issues due to schema architecture change on netbox side, swagger 2.0 -> openApi3
+
 # AIO Netbox
 
 An asyncio netbox library that conforms to any running netbox via it's OpenAPI spec
