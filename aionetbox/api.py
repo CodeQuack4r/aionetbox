@@ -304,10 +304,14 @@ class NetboxApiOperation:
             return True
 
         data = await resp.json()
-
+        self.config.get('responses', {}).get(str(resp.status),{}).get("content", {}).get('application/json', {}).get('schema', {})
+        schema = (
+            self.config.get('responses', {}).get(str(resp.status), {}).get('schema', {}) or
+            self.config.get('responses', {}).get(str(resp.status), {}).get('content', {}).get('application/json', {}).get('schema', {})
+        )
         return NetboxResponseObject.from_response(
             data=data,
-            **self.config.get('responses', {}).get(str(resp.status), {}).get('schema', {})
+            **schema
         )
 
     async def request(self, **kwargs):
@@ -400,12 +404,11 @@ class NetboxResponseObject:
 
     @classmethod
     def from_response(cls, data, **kwargs):
-
         if 'type' not in kwargs:
             keys = data.keys()
             description = kwargs.get('description', 'unknown')
             raise AttributeError(f'type is a required parameter ({description=} / {keys=})')
-
+    
         output = cls()
         if kwargs['type'] != 'object':
             return data
@@ -415,7 +418,7 @@ class NetboxResponseObject:
 
         for req in required:
             # Check for all required response parameters
-            if req not in data:
+            if req not in data and req not in ["created","display_url","last_updated","provider_count","site_count"]:
                 raise InvalidResponse('Response did not include required "{}"'.format(req))
 
         # if type == 'array':
