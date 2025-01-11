@@ -51,8 +51,8 @@ class AIONetbox:
             api_key: The API Token from Netbox to access Netbox API
             session: ClientSession for http requests
         """
-        spec = NetboxSpec('{}/api/swagger.json'.format(url))
-
+        #spec = NetboxSpec('{}/api/swagger.json'.format(url))
+        spec = NetboxSpec('{}/api/schema'.format(url))
         aionb = cls(url, api_key, private_key=private_key, spec=spec, session=session)
 
         return aionb
@@ -224,9 +224,6 @@ class AIONetbox:
         """Close all open connections"""
         await self.session.close()
 
-    def __del__(self):
-        asyncio.ensure_future(self.session.close())
-
 
 class NetboxApi:
     """Netbox API group endpoint
@@ -240,11 +237,13 @@ class NetboxApi:
         self.name = tag
         self.config = operations
         self.operations = {k.replace('-', '_'): k for k in operations.keys()}
+
         self.client = client
 
         self._operation_cache = {}
 
     def __getattr__(self, operation):
+
         """NetboxApiOperation lookup
 
         Used to load an operationId from configuration of the API group
@@ -344,7 +343,7 @@ class NetboxApiOperation:
 
     def build_url(self, url):
         """Construct a URL from spec"""
-        return '{}{}{}'.format(self.client.host, self.client.config.get('_orig', {}).get('basePath'), url)
+        return '{}{}{}'.format(self.client.host, self.client.config.get('_orig', {}).get('basePath',""), url)
 
     def parse_params(self, params):
         """Build request parameters and validate based on spec"""
@@ -356,7 +355,7 @@ class NetboxApiOperation:
 
         spec_parameters = self.config.get('parameters', []) + self.rest_config.get('params', [])
         for sp in spec_parameters:
-            if sp['name'] not in params and sp['required']:
+            if sp['name'] not in params and sp.get('required',False):
                 raise MissingRequiredParam('{} is a required parameter'.format(sp['name']))
 
             if sp['name'] not in params:
